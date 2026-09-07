@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+ts-build/
+*.tsbuildinfo
+
+# Local probe artifacts / managed Chrome test profiles
+tmp/
+tests/.tmp/
+.qwen/
+mcps/
+
+# Agent / IDE local state
+.claude/
+.cursor/
+.codex/
+.gemini/
+.grok/
+.antigravity/
+
+# Environment & secrets — never commit real keys or sessions
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+!.env.example
+
+# Local user data if copied into the repo by mistake
+usage-cache.json
+usage-history.db
+usage-history.db-*
+agent-stats-credentials.json
+agent-stats-oauth-tokens.json
+app-settings.json
+managed-chrome/
+**/state.vscdb
+**/*credentials*.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Electron
+*.asar
+
+# Logs & local diagnostics
+*.log
+npm-debug.log*
+launch-log.txt
+*-diagnostic.png

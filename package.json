@@ -1,0 +1,98 @@
+{
+  "name": "agent-stats",
+  "version": "1.0.0",
+  "description": "AI Agent Usage Monitor - track usage across ChatGPT, Claude, Gemini, and more",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "node -e \"delete process.env.ELECTRON_RUN_AS_NODE; require('child_process').execSync('electron-vite dev',{stdio:'inherit',env:process.env})\"",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "clean": "node -e \"['dist','out'].forEach(p => require('fs').rmSync(p, { recursive: true, force: true }))\"",
+    "typecheck": "tsc -b --noEmit",
+    "test:ipc": "node tests/ipc-contract-smoke.js",
+    "test:webauthn": "node tests/webauthn-guard-smoke.js",
+    "test:usage-contract": "node tests/usage-contract-smoke.js",
+    "test:usage-normalizer": "node tests/usage-normalizer-smoke.js",
+    "test:usage-integrity": "node tests/usage-integrity-smoke.js",
+    "test:usage-freshness": "node tests/usage-freshness-smoke.js",
+    "test:usage-history": "node tests/usage-history-schema-smoke.js",
+    "test:usage-api": "node tests/usage-api-fetchers-smoke.js",
+    "test:service-registry": "node tests/service-registry-parity-smoke.js",
+    "test:usage-parsers": "node tests/test_usage_text_parsers.js",
+    "test:cursor-contract": "node tests/cursor-usage-contract-smoke.js",
+    "test:dual-window": "node tests/dual-window-smoke.js",
+    "test:managed-login": "node tests/managed-session-login-smoke.js",
+    "test:managed-teardown": "node tests/managed-chrome-teardown-smoke.js",
+    "test:refresh-coordinator": "node tests/refresh-coordinator-behavior-smoke.js",
+    "test:window-lifecycle": "node tests/window-lifecycle-smoke.js",
+    "smoke:authenticated": "node -e \"process.env.AGENT_STATS_SCRAPER_DEBUG='1'; delete process.env.ELECTRON_RUN_AS_NODE; require('child_process').execSync('electron-vite dev',{stdio:'inherit',env:process.env})\"",
+    "preview:smoke": "node tests/packaged-main-smoke.js",
+    "postbuild": "npm run test:ipc && npm run test:webauthn && npm run test:usage-contract && npm run test:usage-normalizer && npm run test:usage-integrity && npm run test:usage-freshness && npm run test:usage-history && npm run test:usage-api && npm run test:service-registry && npm run test:usage-parsers && npm run test:cursor-contract && npm run test:dual-window && npm run test:managed-login && npm run test:managed-teardown && npm run test:refresh-coordinator && npm run test:window-lifecycle",
+    "postinstall": "electron-builder install-app-deps",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
+  },
+  "keywords": [
+    "electron",
+    "ai",
+    "usage",
+    "monitor"
+  ],
+  "author": "arsilver",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arsilver/agent_stats.git"
+  },
+  "homepage": "https://github.com/arsilver/agent_stats",
+  "bugs": {
+    "url": "https://github.com/arsilver/agent_stats/issues"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "dotenv": "^17.3.1",
+    "keytar": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.3.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "^40.6.0",
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^4.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "build": {
+    "appId": "com.agent-stats.app",
+    "productName": "Agent Stats",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "out/main/**/*",
+      "out/preload/**/*",
+      "out/renderer/**/*",
+      "assets/**/*",
+      "!**/node_modules/better-sqlite3/deps/**",
+      "!**/node_modules/better-sqlite3/src/**"
+    ],
+    "icon": "assets/icon.png",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    }
+  }
+}

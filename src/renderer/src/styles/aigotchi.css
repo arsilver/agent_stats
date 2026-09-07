@@ -1,0 +1,722 @@
+.aigotchi-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, #0a0a0f 0%, #111113 100%);
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Room background — single rule (duplicate removed), diorama layers provide the visuals */
+.room-environment {
+    position: relative;
+    flex: 1;
+    border-radius: 12px;
+    background-color: #0c0c0c;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.5);
+    transition: background-color 2s ease;
+}
+
+.room-environment::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    opacity: 0.35;
+    z-index: 2;
+}
+
+/* Time-of-day ambient room tinting */
+.room-environment.time-morning {
+    background-color: #0e0d0a;
+}
+
+.room-environment.time-afternoon {
+    background-color: #0c0c0c;
+}
+
+.room-environment.time-evening {
+    background-color: #0e0b08;
+}
+
+.room-environment.time-night {
+    background-color: #080810;
+}
+
+.aigotchi-container .page-header {
+    margin-bottom: 24px;
+}
+
+.aigotchi-container .page-header h1 {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    color: var(--accent-primary);
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(51, 255, 0, 0.4);
+}
+
+/* ============================================
+   MOOD BARS - Header Mood Indicators
+   ============================================ */
+
+.mood-bars {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.mood-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mood-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.mood-name {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.mood-track {
+    width: 40px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mood-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+    transition: background-color 0.5s ease;
+}
+
+.mood-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 50px;
+}
+
+/* ============================================
+   PARALLAX SCENE LAYERS - the room is a place
+   Transform-only, written from the rAF loop
+   ============================================ */
+
+.room-layer {
+    position: absolute;
+    inset: -8%;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.layer-sky { z-index: 1; }
+.layer-wall { z-index: 2; }
+.layer-mid { z-index: 3; }
+.layer-floor { z-index: 4; }
+
+/* --- Sky window with sun/moon + star field --- */
+
+.sky-window {
+    position: absolute;
+    right: 10%;
+    top: 17%;
+    width: 26%;
+    height: 38%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.55);
+}
+
+.sky-day,
+.sky-night {
+    position: absolute;
+    inset: 0;
+    transition: opacity 60s linear;
+}
+
+.sky-day {
+    background: linear-gradient(180deg, #2c4a6b 0%, #4a6d8c 55%, #7a8b96 100%);
+}
+
+.sky-night {
+    background: linear-gradient(180deg, #05060f 0%, #0b1026 60%, #131a33 100%);
+}
+
+.stars {
+    position: absolute;
+    inset: 0;
+    transition: opacity 60s linear;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #e8eeff;
+    animation: starTwinkle 3.5s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+
+.celestial {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    transition: left 60s linear, bottom 60s linear;
+}
+
+.celestial.sun {
+    background: radial-gradient(circle at 40% 40%, #ffe9b0, #ffb84d 70%, #f59e2c);
+    box-shadow: 0 0 22px rgba(255, 190, 80, 0.75);
+}
+
+.celestial.moon {
+    background: radial-gradient(circle at 38% 38%, #f4f1e6, #cfc9b4 70%, #a8a28c);
+    box-shadow: 0 0 16px rgba(230, 228, 210, 0.5);
+}
+
+.window-frame {
+    position: absolute;
+    inset: 0;
+    border: 6px solid #221c18;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.window-frame::before,
+.window-frame::after {
+    content: '';
+    position: absolute;
+    background: #221c18;
+}
+
+.window-frame::before {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    margin-left: -2.5px;
+}
+
+.window-frame::after {
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 5px;
+    margin-top: -2.5px;
+}
+
+/* --- Back wall: faint pattern + poster silhouettes --- */
+
+.wall-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.5px);
+    background-size: 34px 34px;
+    opacity: 0.5;
+}
+
+.wall-poster {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border-radius: 6px;
+    opacity: 0.04;
+    filter: grayscale(1);
+    pointer-events: none;
+}
+
+.lamp-switch {
+    position: absolute;
+    left: 6.5%;
+    top: 42%;
+    font-size: 22px;
+    cursor: pointer;
+    pointer-events: auto;
+    opacity: 0.35;
+    filter: grayscale(0.8);
+    transition: opacity 0.4s ease, filter 0.4s ease, transform 0.15s ease;
+    z-index: 5;
+}
+
+.lamp-switch:hover {
+    transform: scale(1.12);
+}
+
+.lamp-switch.on {
+    opacity: 1;
+    filter: none;
+}
+
+/* --- Mid: server rack silhouette with blinking LEDs --- */
+
+.server-rack {
+    position: absolute;
+    right: 4%;
+    bottom: 18%;
+    width: 64px;
+    height: 118px;
+    background: linear-gradient(180deg, #17171d 0%, #101014 100%);
+    border: 1px solid #26262e;
+    border-radius: 4px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+}
+
+.server-rack::before {
+    content: '';
+    position: absolute;
+    inset: 8px 8px auto 8px;
+    height: 62px;
+    background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 12px);
+}
+
+.server-rack .led {
+    position: absolute;
+    left: 10px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.server-rack .led-1 {
+    bottom: 26px;
+    background: #4ade80;
+    animation: ledBlink 1.8s steps(2) infinite;
+}
+
+.server-rack .led-2 {
+    bottom: 16px;
+    background: #fbbf24;
+    animation: ledBlink 2.6s steps(2) infinite 0.7s;
+}
+
+.server-rack .led-3 {
+    bottom: 6px;
+    background: #38bdf8;
+    animation: ledBlink 1.3s steps(2) infinite 0.3s;
+}
+
+@keyframes ledBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.15; }
+}
+
+/* --- Floor: strip + rug + soft contact shadows --- */
+
+.floor-strip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 90px;
+    background: linear-gradient(180deg, transparent 0%, rgba(38, 30, 26, 0.55) 45%, rgba(24, 19, 16, 0.85) 100%);
+}
+
+.floor-rug {
+    position: absolute;
+    left: 6%;
+    bottom: 26px;
+    width: 34%;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(94, 66, 54, 0.5) 0%, rgba(94, 66, 54, 0.18) 60%, transparent 75%);
+}
+
+.contact-shadow {
+    position: absolute;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+}
+
+/* ============================================
+   WORKZONE - Visual Area for Active AIs
+   ============================================ */
+
+.workzone-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 150px;
+    background: linear-gradient(180deg,
+            rgba(0, 100, 255, 0.15) 0%,
+            rgba(0, 100, 255, 0.08) 50%,
+            rgba(0, 100, 255, 0.02) 100%);
+    border-bottom: 2px solid rgba(0, 200, 255, 0.5);
+    pointer-events: none;
+    z-index: 5;
+    box-shadow: 0 4px 20px rgba(0, 150, 255, 0.15);
+}
+
+/* Energy barrier effect at workzone boundary — opacity-only pulse */
+.workzone-area::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(0, 200, 255, 0.8) 10%,
+            rgba(100, 230, 255, 1) 50%,
+            rgba(0, 200, 255, 0.8) 90%,
+            transparent 100%);
+    box-shadow: 0 0 14px rgba(0, 200, 255, 0.55);
+    animation: barrierPulse 1.5s ease-in-out infinite;
+    will-change: opacity;
+}
+
+@keyframes barrierPulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+}
+
+.workzone-label {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: bold;
+    color: rgba(100, 180, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+}
+
+.workzone-icon {
+    font-size: 14px;
+    animation: pulse 1.5s ease-in-out infinite;
+    will-change: opacity, transform;
+}
+
+.workzone-count {
+    padding: 2px 8px;
+    background: rgba(0, 150, 255, 0.2);
+    border: 1px solid rgba(0, 150, 255, 0.4);
+    border-radius: 12px;
+    font-size: 10px;
+    color: #fff;
+    margin-left: 4px;
+}
+
+/* Scrolling grid — oversized layer animating TRANSFORM (no background-position paints) */
+.workzone-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    background-image:
+        linear-gradient(90deg, rgba(0, 150, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(0, 150, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridScroll 20s linear infinite;
+    will-change: transform;
+}
+
+.workzone-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(0, 150, 255, 0.8) 20%,
+            rgba(100, 200, 255, 1) 50%,
+            rgba(0, 150, 255, 0.8) 80%,
+            transparent 100%);
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.6);
+    animation: glowPulse 3s ease-in-out infinite;
+    will-change: opacity;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes gridScroll {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-40px, -40px, 0); }
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* CRT Scanline effect for retro feel */
+.room-scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0),
+            rgba(255, 255, 255, 0) 50%,
+            rgba(0, 0, 0, 0.2) 50%,
+            rgba(0, 0, 0, 0.2));
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* ============================================
+   INDIVIDUAL WORKSTATIONS - One per AI character
+   ============================================ */
+
+.workstation {
+    position: absolute;
+    top: 30px;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 90px;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.35;
+    transition: opacity 0.5s ease;
+}
+
+.workstation.active {
+    opacity: 1;
+}
+
+.workstation .desk-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.workstation .monitor {
+    width: 50px;
+    height: 36px;
+    background: #111;
+    border: 3px solid #333;
+    border-radius: 3px;
+    margin-bottom: -5px;
+    position: relative;
+    z-index: 6;
+}
+
+.workstation .monitor.glow::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: rgba(0, 255, 100, 0.15);
+    box-shadow: 0 0 15px rgba(0, 255, 100, 0.4);
+    animation: monitorFlicker 4s infinite alternate;
+}
+
+/* Overheating workstation (exhausted character ≥75%) — amber→red monitor */
+.workstation.overheat .monitor {
+    border-color: #5a3a22;
+}
+
+.workstation.overheat .monitor::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    animation: overheatGlow 1.6s ease-in-out infinite;
+}
+
+@keyframes overheatGlow {
+    0%, 100% {
+        background: rgba(255, 170, 60, 0.16);
+        box-shadow: 0 0 12px rgba(255, 160, 50, 0.45);
+    }
+    50% {
+        background: rgba(255, 70, 40, 0.3);
+        box-shadow: 0 0 22px rgba(255, 60, 30, 0.65);
+    }
+}
+
+.workstation .desk {
+    width: 65px;
+    height: 14px;
+    background: linear-gradient(180deg, #333 0%, #1a1a1a 100%);
+    border: 2px solid #444;
+    border-radius: 3px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.8);
+    position: relative;
+}
+
+.workstation .desk::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 8px;
+    width: 6px;
+    height: 20px;
+    background: #222;
+}
+
+.workstation .desk::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    right: 8px;
+    width: 6px;
+    height: 20px;
+    background: #222;
+}
+
+.station-label {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: bold;
+    color: rgba(100, 180, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+
+.workstation.active .station-label {
+    color: rgba(100, 180, 255, 0.9);
+    text-shadow: 0 0 8px rgba(0, 150, 255, 0.5);
+}
+
+@keyframes monitorFlicker {
+    0%, 100% { opacity: 0.8; }
+    5%, 15% { opacity: 0.3; }
+    10%, 20% { opacity: 1; }
+    50% { opacity: 0.9; }
+}
+
+/* ============================================
+   FX LAYER - ambient canvas, lamp, vignette, scan
+   ============================================ */
+
+.ambient-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 24;
+}
+
+.lamp-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 8% 42%, rgba(255, 180, 90, 0.5) 0%, rgba(255, 160, 70, 0.16) 34%, transparent 62%);
+    pointer-events: none;
+    z-index: 25;
+    transition: opacity 60s linear;
+}
+
+.room-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+    pointer-events: none;
+    z-index: 26;
+}
+
+.scan-sweep {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 90px;
+    background: linear-gradient(90deg, transparent, rgba(120, 220, 255, 0.16), transparent);
+    pointer-events: none;
+    z-index: 27;
+    animation: scanSweep 1.4s linear forwards;
+}
+
+@keyframes scanSweep {
+    0% { left: -90px; opacity: 1; }
+    85% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+}
+
+/* ============================================
+   REDUCED MOTION - flatten room animation
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .workzone-grid,
+    .workzone-area::after,
+    .workzone-icon,
+    .workzone-glow,
+    .workstation .monitor.glow::after,
+    .workstation.overheat .monitor::after,
+    .server-rack .led,
+    .star,
+    .scan-sweep {
+        animation: none !important;
+    }
+
+    .celestial,
+    .sky-day,
+    .sky-night,
+    .stars,
+    .lamp-overlay,
+    .room-environment {
+        transition: none !important;
+    }
+
+    .room-layer {
+        transform: none !important;
+    }
+}
